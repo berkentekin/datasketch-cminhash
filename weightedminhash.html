@@ -1,0 +1,200 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weighted MinHash &mdash; datasketch 1.7.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=a77542ef"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="MinHash" href="minhash.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            datasketch
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="documentation.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hyperloglog.html">HyperLogLog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hyperloglog.html#hyperloglog-plusplus">HyperLogLog++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lsh.html">MinHash LSH</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lshbloom.html">LSHBloom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lshensemble.html">MinHash LSH Ensemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lshforest.html">MinHash LSH Forest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="minhash.html">MinHash</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Weighted MinHash</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">datasketch</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Weighted MinHash</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/weightedminhash.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="weighted-minhash">
+<span id="id1"></span><h1>Weighted MinHash<a class="headerlink" href="#weighted-minhash" title="Link to this heading"></a></h1>
+<p>MinHash can be used to compress unweighted
+<a class="reference external" href="https://en.wikipedia.org/wiki/Set_(mathematics)">set</a> or binary
+vector, and estimate the <a class="reference external" href="https://en.wikipedia.org/wiki/Jaccard_index">unweighted Jaccard
+similarity</a>. It is
+possible to modify MinHash for <a class="reference external" href="https://en.wikipedia.org/wiki/Jaccard_index#Generalized_Jaccard_similarity_and_distance">weighted
+Jaccard</a>
+on <a class="reference external" href="https://en.wikipedia.org/wiki/Multiset">**multisets**</a> by
+expanding each item (or dimension) by its weight (usually its count in
+the multiset). However this approach does not support real number
+weights, and doing so can be very expensive if the weights are very
+large. <a class="reference external" href="http://static.googleusercontent.com/media/research.google.com/en//pubs/archive/36928.pdf">Weighted
+MinHash</a>
+is created by Sergey Ioffe, and its performance does not depend on the
+weights - as long as the universe of all possible items (or dimension
+for vectors) is known. This makes it unsuitable for stream processing,
+when the knowledge of unseen items cannot be assumed.</p>
+<p>In this library, <a class="reference internal" href="documentation.html#datasketch.WeightedMinHash" title="datasketch.WeightedMinHash"><code class="xref py py-class docutils literal notranslate"><span class="pre">datasketch.WeightedMinHash</span></code></a> objects can only be created from
+vectors using <a class="reference internal" href="documentation.html#datasketch.WeightedMinHashGenerator" title="datasketch.WeightedMinHashGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">datasketch.WeightedMinHashGenerator</span></code></a>, which takes the dimension as
+a required parameter.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Using default sample_size 256 and seed 1</span>
+<span class="n">wmg</span> <span class="o">=</span> <span class="n">WeightedMinHashGenerator</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can specify the number of samples (similar to number of permutation
+functions in MinHash) and the random seed.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">wmg</span> <span class="o">=</span> <span class="n">WeightedMinHashGenerator</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">sample_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Here is a usage example.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datasketch</span><span class="w"> </span><span class="kn">import</span> <span class="n">WeightedMinHashGenerator</span>
+
+<span class="n">v1</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
+<span class="n">v2</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+
+<span class="c1"># WeightedMinHashGenerator requires dimension as the first argument</span>
+<span class="n">wmg</span> <span class="o">=</span> <span class="n">WeightedMinHashGenerator</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">v1</span><span class="p">))</span>
+<span class="n">wm1</span> <span class="o">=</span> <span class="n">wmg</span><span class="o">.</span><span class="n">minhash</span><span class="p">(</span><span class="n">v1</span><span class="p">)</span> <span class="c1"># wm1 is of the type WeightedMinHash</span>
+<span class="n">wm2</span> <span class="o">=</span> <span class="n">wmg</span><span class="o">.</span><span class="n">minhash</span><span class="p">(</span><span class="n">v2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Estimated Jaccard is&quot;</span><span class="p">,</span> <span class="n">wm1</span><span class="o">.</span><span class="n">jaccard</span><span class="p">(</span><span class="n">wm2</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>It is possible to make <a class="reference internal" href="documentation.html#datasketch.WeightedMinHash" title="datasketch.WeightedMinHash"><code class="xref py py-class docutils literal notranslate"><span class="pre">datasketch.WeightedMinHash</span></code></a> have a <code class="docutils literal notranslate"><span class="pre">update</span></code> interface
+similar to <code class="xref py py-class docutils literal notranslate"><span class="pre">MinHash</span></code> and use it for stream data processing. However,
+this makes the cost of <code class="docutils literal notranslate"><span class="pre">update</span></code> increase linearly with respect to the
+weight. Thus, <code class="docutils literal notranslate"><span class="pre">update</span></code> is not implemented for <a class="reference internal" href="documentation.html#datasketch.WeightedMinHash" title="datasketch.WeightedMinHash"><code class="xref py py-class docutils literal notranslate"><span class="pre">datasketch.WeightedMinHash</span></code></a> in
+this library.</p>
+<p>Weighted MinHash as similar accuracy and performance profiles as
+MinHash. As you increase the number of samples, you get better accuracy,
+at the expense of slower speed.</p>
+<figure class="align-default">
+<img alt="Weighted MinHash Benchmark" src="_images/weighted_minhash_benchmark.png" />
+</figure>
+<p><a class="reference internal" href="documentation.html#datasketch.MinHashLSH" title="datasketch.MinHashLSH"><code class="xref py py-class docutils literal notranslate"><span class="pre">datasketch.MinHashLSH</span></code></a> and
+<a class="reference internal" href="documentation.html#datasketch.MinHashLSHForest" title="datasketch.MinHashLSHForest"><code class="xref py py-class docutils literal notranslate"><span class="pre">datasketch.MinHashLSHForest</span></code></a>
+can also be used to index <a class="reference internal" href="documentation.html#datasketch.WeightedMinHash" title="datasketch.WeightedMinHash"><code class="xref py py-class docutils literal notranslate"><span class="pre">datasketch.WeightedMinHash</span></code></a>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datasketch</span><span class="w"> </span><span class="kn">import</span> <span class="n">WeightedMinHashGenerator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datasketch</span><span class="w"> </span><span class="kn">import</span> <span class="n">MinHashLSH</span>
+
+<span class="n">v1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">v2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">v3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">mg</span> <span class="o">=</span> <span class="n">WeightedMinHashGenerator</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="n">m1</span> <span class="o">=</span> <span class="n">mg</span><span class="o">.</span><span class="n">minhash</span><span class="p">(</span><span class="n">v1</span><span class="p">)</span>
+<span class="n">m2</span> <span class="o">=</span> <span class="n">mg</span><span class="o">.</span><span class="n">minhash</span><span class="p">(</span><span class="n">v2</span><span class="p">)</span>
+<span class="n">m3</span> <span class="o">=</span> <span class="n">mg</span><span class="o">.</span><span class="n">minhash</span><span class="p">(</span><span class="n">v3</span><span class="p">)</span>
+
+<span class="c1"># Create weighted MinHash LSH index</span>
+<span class="n">lsh</span> <span class="o">=</span> <span class="n">MinHashLSH</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">sample_size</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">lsh</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="s2">&quot;m2&quot;</span><span class="p">,</span> <span class="n">m2</span><span class="p">)</span>
+<span class="n">lsh</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="s2">&quot;m3&quot;</span><span class="p">,</span> <span class="n">m3</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">lsh</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">m1</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Approximate neighbours with weighted Jaccard similarity &gt; 0.1&quot;</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="minhash.html" class="btn btn-neutral float-left" title="MinHash" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Eric Zhu.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-93507731-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-93507731-1', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>
